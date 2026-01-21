@@ -1,36 +1,339 @@
-async function processGetKey(gameType, id, btnElement) {
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LPV Project - Mod Menu Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- GIAO DIỆN DARK MODE GAMING --- */
+        :root {
+            --primary-color: #00e676; /* Xanh lá Hacker */
+            --bg-color: #050505;
+            --card-bg: #141414;
+            --text-color: #e0e0e0;
+            --accent-color: #d32f2f; /* Đỏ */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Roboto', sans-serif;
+            margin: 0; padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* Header hiệu ứng */
+        header {
+            background: linear-gradient(180deg, rgba(0,230,118,0.05) 0%, rgba(5,5,5,1) 100%);
+            padding: 50px 20px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0;
+            text-shadow: 0 0 15px rgba(0, 230, 118, 0.4);
+        }
+
+        .subtitle { color: #888; margin-top: 10px; font-size: 1.1rem; letter-spacing: 1px; }
+
+        /* Container lưới */
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+        }
+
+        /* Thẻ Game */
+        .game-card {
+            background: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+        }
+
+        .game-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-img {
+            width: 100%;
+            height: 190px;
+            object-fit: cover;
+            border-bottom: 1px solid #2a2a2a;
+            background: #222; /* Placeholder bg */
+        }
+
+        .card-body { padding: 25px; }
+
+        h3 {
+            margin: 0 0 10px 0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        p.desc {
+            font-size: 0.9rem;
+            color: #aaa;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            min-height: 40px;
+        }
+
+        /* Nút bấm */
+        .btn-group { display: flex; flex-direction: column; gap: 12px; }
+
+        .btn {
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: 0.2s;
+            font-size: 0.9rem;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+
+        .btn-dl { 
+            background: #2a2a2a; color: #fff; border: 1px solid #444; 
+        }
+        .btn-dl:hover { background: #3a3a3a; border-color: #fff; }
+
+        .btn-key { 
+            background: linear-gradient(90deg, #b71c1c, #d32f2f); 
+            color: white;
+            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.2);
+        }
+        .btn-key:hover { filter: brightness(1.2); }
+        .btn-key:disabled { opacity: 0.5; cursor: wait; }
+
+        /* Khu vực kết quả */
+        .result-box {
+            margin-top: 15px;
+            padding: 15px;
+            background: #000;
+            border: 1px dashed #444;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            word-break: break-all;
+            display: none; 
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Spinner Loading */
+        .loader {
+            width: 16px; height: 16px;
+            border: 2px solid #fff; border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>LPV PROJECT</h1>
+        <div class="subtitle">Hệ thống phân phối Mod VIP & Get Key Tự Động</div>
+    </header>
+
+    <div class="container" id="game-container">
+        </div>
+
+    <footer style="text-align:center; padding: 40px; color: #444; font-size: 0.8rem; border-top: 1px solid #222; margin-top: 40px;">
+        &copy; 2026 LPV Project. Developed for Gamers.
+    </footer>
+
+    <script>
+        
+        // --- 1. CẤU HÌNH (Đã cập nhật Type theo yêu cầu của bạn) ---
+        const CONFIG = {
+            link4mApiKey: "67fe08df2741353b9475dd73", 
+
+            games: [
+                {
+                    name: "PUBG Mobile",
+                    type: "PUBG",
+                    apkLink: "#", // Thay link tải của bạn vào đây
+                    img: "https://wallpapers.com/images/hd/pubg-mobile-4k-game-poster-e2609l58732155k8.jpg", 
+                    desc: "Menu VIP: ESP, Aimbot, Bullet Track, Anti-Ban."
+                },
+                {
+                    name: "Liên Quân Mobile",
+                    type: "com.garena.game.kgvo",
+                    apkLink: "#", // Thay link tải của bạn vào đây
+                    img: "https://images.hdqwalls.com/wallpapers/arena-of-valor-4k-se.jpg",
+                    desc: "Hack Map sáng, Cam xa, Mod Skin full hiệu ứng, Hiện Ulti."
+                },
+                {
+                    name: "Blood Strike",
+                    type: "com.netease.newspike",
+                    apkLink: "#", // Thay link tải của bạn vào đây
+                    img: "https://i.ytimg.com/vi/q1R1tF9h3u0/maxresdefault.jpg",
+                    desc: "Wallhack, Auto Headshot, No Recoil, Fast Reload."
+                },
+                {
+                    name: "Free Fire",
+                    type: "PUBG", // Dùng chung type với PUBG
+                    apkLink: "#", // Thay link tải của bạn vào đây
+                    img: "https://wallpaperaccess.com/full/2223885.jpg",
+                    desc: "Đạn thẳng, Định vị địch, Tàng hình, Chạy nhanh."
+                },
+                {
+                    name: "Delta Force",
+                    type: "DTF",
+                    apkLink: "#", // Thay link tải của bạn vào đây
+                    img: "https://images3.alphacoders.com/834/83422.jpg",
+                    desc: "God Mode, Unlimited Ammo, One Hit Kill."
+                }
+            ]
+        };
+
+        // --- 2. RENDER GIAO DIỆN ---
+        function renderGames() {
+            const container = document.getElementById('game-container');
+            let html = '';
+
+            CONFIG.games.forEach((game, index) => {
+                html += `
+                <div class="game-card">
+                    <img src="${game.img}" alt="${game.name}" class="game-img">
+                    <div class="card-body">
+                        <h3>${game.name}</h3>
+                        <p class="desc">${game.desc}</p>
+                        <div class="btn-group">
+                            <a href="${game.apkLink}" target="_blank" class="btn btn-dl">
+                                📥 Tải Mod APK
+                            </a>
+                            <button class="btn btn-key" onclick="processGetKey('${game.type}', ${index}, this)">
+                                🔑 Lấy Key Ngay
+                            </button>
+                        </div>
+                        <div id="result-${index}" class="result-box"></div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        // --- 3. LOGIC LẤY KEY (Kết nối với Serverless Function) ---
+        async function processGetKey(gameType, id, btnElement) {
             const resultDiv = document.getElementById(`result-${id}`);
             
+            // Hiệu ứng Loading
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<span class="loader"></span> Đang kết nối Server Vercel...';
+            resultDiv.style.color = '#e0e0e0';
+            resultDiv.innerHTML = '<div style="display:flex; align-items:center; gap:10px"><div class="loader"></div> Đang kết nối máy chủ...</div>';
             btnElement.disabled = true;
 
-            try {
-                // [THAY ĐỔI QUAN TRỌNG]
-                // Gọi vào chính Serverless Function của mình
-                // Đường dẫn tương đối: /api/getkey
-                const apiUrl = `/api/getkey?type=${gameType}`;
+            const targetUrlForFallback = `https://hackobbvip.site/GETKEY/ObbVip&type=${gameType}`;
 
-                const res1 = await fetch(apiUrl);
+            try {
+                // [GỌI BACKEND VERCEL] 
+                // Gọi API nội bộ /api/getkey để tránh CORS và fake User-Agent
+                const apiVercel = `/api/getkey?type=${gameType}`;
+                
+                const res1 = await fetch(apiVercel);
                 
                 if (!res1.ok) {
-                    throw new Error("Không lấy được Key (Server Vercel báo lỗi)");
+                    throw new Error("Server Vercel phản hồi lỗi (" + res1.status + ")");
                 }
                 
                 const yeuLink = await res1.text();
                 
-                // Kiểm tra dữ liệu
-                if (!yeuLink.includes("http")) {
-                    // Nếu server trả về lỗi, ném lỗi để chạy xuống phần Fallback thủ công
-                    throw new Error("Server đích chặn bot");
+                // Kiểm tra dữ liệu trả về có phải link http không
+                if (!yeuLink.includes("http") || yeuLink.includes("<html")) {
+                    throw new Error("Bot không lấy được link (Bị chặn)");
                 }
 
-                // --- ĐOẠN DƯỚI NÀY GIỮ NGUYÊN ---
-                // Gọi Link4M để rút gọn...
+                // [RÚT GỌN LINK] Nếu lấy được yeulink thì rút gọn qua Link4M
+                resultDiv.innerHTML = '<div style="display:flex; align-items:center; gap:10px"><div class="loader"></div> Đang tạo link rút gọn...</div>';
+                
                 const finalApiUrl = `https://link4m.co/st?api=${CONFIG.link4mApiKey}&url=${encodeURIComponent(yeuLink)}`;
-                // ... (Phần còn lại y hệt code cũ) ...
+                const res2 = await fetch(finalApiUrl);
+                let finalLink = await res2.text();
+                
+                try {
+                    const json = JSON.parse(finalLink);
+                    if(json.shortenedUrl) finalLink = json.shortenedUrl;
+                } catch(e) {}
+
+                // [THÀNH CÔNG]
+                resultDiv.innerHTML = `
+                    <div style="color:#aaa; margin-bottom:5px; font-size:0.8rem">✅ Get Key thành công:</div>
+                    <a href="${finalLink}" target="_blank" style="color: #00e676; font-size: 1.1rem; font-weight:bold; text-decoration: none; border-bottom: 2px solid #00e676;">
+                        👉 NHẤN VÀO ĐÂY
+                    </a>
+                `;
 
             } catch (error) {
-                // ... (Phần Fallback giữ nguyên để dự phòng) ...
+                console.warn("Chuyển sang chế độ thủ công:", error.message);
+                
+                // [FALLBACK - DỰ PHÒNG]
+                // Nếu Serverless thất bại (hoặc chạy localhost không có backend), dùng link thủ công
+                // Rút gọn link gốc hackobbvip qua Link4M để vẫn kiếm tiền
+                
+                resultDiv.innerHTML = '<div style="display:flex; align-items:center; gap:10px"><div class="loader"></div> Đang chuyển hướng thủ công...</div>';
+
+                const fallbackApi = `https://link4m.co/st?api=${CONFIG.link4mApiKey}&url=${encodeURIComponent(targetUrlForFallback)}`;
+                
+                try {
+                    const resFb = await fetch(fallbackApi);
+                    let fbLink = await resFb.text();
+                    try {
+                        const json = JSON.parse(fbLink);
+                        if(json.shortenedUrl) fbLink = json.shortenedUrl;
+                    } catch(e) {}
+
+                    resultDiv.innerHTML = `
+                        <div style="color:#ff9800; font-size: 0.85rem; margin-bottom:8px;">
+                            ⚠ Server đang quá tải. Vui lòng lấy thủ công:
+                        </div>
+                        <a href="${fbLink}" target="_blank" class="btn" style="background:#333; color:#fff; font-size:0.8rem;">
+                            👉 Link lấy Key (Backup)
+                        </a>
+                    `;
+                } catch (err2) {
+                    // Nếu Link4M cũng lỗi thì đưa link gốc
+                    resultDiv.innerHTML = `
+                         <div style="color:#ff9800; font-size: 0.85rem; margin-bottom:8px;">
+                            ⚠ Lấy thủ công (Link gốc):
+                        </div>
+                        <a href="${targetUrlForFallback}" target="_blank" class="btn" style="background:#333; color:#fff;">
+                            👉 Link Gốc
+                        </a>
+                    `;
+                }
+
+            } finally {
+                btnElement.disabled = false;
             }
         }
+
+        // Khởi chạy
+        renderGames();
+
+    </script>
+</body>
+</html>
