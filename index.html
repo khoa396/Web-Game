@@ -1,0 +1,36 @@
+async function processGetKey(gameType, id, btnElement) {
+            const resultDiv = document.getElementById(`result-${id}`);
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<span class="loader"></span> Đang kết nối Server Vercel...';
+            btnElement.disabled = true;
+
+            try {
+                // [THAY ĐỔI QUAN TRỌNG]
+                // Gọi vào chính Serverless Function của mình
+                // Đường dẫn tương đối: /api/getkey
+                const apiUrl = `/api/getkey?type=${gameType}`;
+
+                const res1 = await fetch(apiUrl);
+                
+                if (!res1.ok) {
+                    throw new Error("Không lấy được Key (Server Vercel báo lỗi)");
+                }
+                
+                const yeuLink = await res1.text();
+                
+                // Kiểm tra dữ liệu
+                if (!yeuLink.includes("http")) {
+                    // Nếu server trả về lỗi, ném lỗi để chạy xuống phần Fallback thủ công
+                    throw new Error("Server đích chặn bot");
+                }
+
+                // --- ĐOẠN DƯỚI NÀY GIỮ NGUYÊN ---
+                // Gọi Link4M để rút gọn...
+                const finalApiUrl = `https://link4m.co/st?api=${CONFIG.link4mApiKey}&url=${encodeURIComponent(yeuLink)}`;
+                // ... (Phần còn lại y hệt code cũ) ...
+
+            } catch (error) {
+                // ... (Phần Fallback giữ nguyên để dự phòng) ...
+            }
+        }
